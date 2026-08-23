@@ -1,58 +1,295 @@
 <script lang="ts">
-  // Datos "quemados" (mock data) para depurar la interfaz
-  const proveedores = ["Distribuidora XYZ", "Tech Supplies", "Alimentos S.A.", "Papelería Central", "Logística Express"];
-  const dias = Array.from({ length: 31 }, (_, i) => `Agosto ${i + 1}`);
+  import type { Supplier, Purchase } from "../types";
+  import { Trash2, Pencil } from "@lucide/svelte";
+  import { notifications } from "../lib/notifications.svelte";
+
+  let props: {
+    selectedDate: Date;
+    activeSuppliers: Supplier[];
+    allPurchases: Purchase[];
+    onCellClick?: (
+      dateStr: string,
+      supplier: Supplier,
+      existingPurchase?: Purchase,
+    ) => void;
+    onRemoveSupplier?: (supplierId: number) => void;
+    onEditSupplier?: (supplier: Supplier) => void;
+  } = $props();
+
+  function getTextColor(color: string) {
+    switch (color) {
+      case "RED": return "text-red-500";
+      case "BLUE": return "text-blue-500";
+      case "GREEN": return "text-emerald-500";
+      case "ORANGE": return "text-orange-500";
+      default: return "";
+    }
+  }
+
+  // Calculamos los días del mes reactivamente
+  let dias = $derived(generarDias(props.selectedDate));
+
+  function generarDias(fecha: Date) {
+    const year = fecha.getFullYear();
+    const month = fecha.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // toLocaleDateString suele ser más consistente que Intl
+    const monthName = fecha.toLocaleDateString("es-ES", { month: "long" });
+    const capitalizedMonthName =
+      monthName.charAt(0).toUpperCase() + monthName.slice(1);
+
+    return Array.from(
+      { length: daysInMonth },
+      (_, i) => `${capitalizedMonthName} ${i + 1}`,
+    );
+  }
+
+  // Helper para buscar compras y evitar errores de TS en el template
+  function getPurchase(
+    supplierId: number,
+    dateStr: string,
+  ): Purchase | undefined {
+    if (!props.allPurchases) return undefined;
+    return props.allPurchases.find(
+      (p: Purchase) => p.supplier_id === supplierId && p.issue_date === dateStr,
+    );
+  }
+
+  // Total de un proveedor en el mes
+  function getSupplierTotal(supplierId: number): number {
+    if (!props.allPurchases) return 0;
+    const y = props.selectedDate.getFullYear();
+    const m = String(props.selectedDate.getMonth() + 1).padStart(2, "0");
+    const prefix = `${y}-${m}-`;
+    return props.allPurchases
+      .filter(
+        (p: Purchase) =>
+          p.supplier_id === supplierId && p.issue_date.startsWith(prefix),
+      )
+      .reduce((sum: number, p: Purchase) => sum + p.total_amount, 0);
+  }
+
+  // Total de TODOS los proveedores en un día específico
+  function getDayTotal(dateStr: string): number {
+    if (!props.allPurchases) return 0;
+    return props.allPurchases
+      .filter((p: Purchase) => p.issue_date === dateStr)
+      .reduce((sum: number, p: Purchase) => sum + p.total_amount, 0);
+  }
+
+  // Total GENERAL del mes
+  function getMonthTotal(): number {
+    if (!props.allPurchases) return 0;
+    const y = props.selectedDate.getFullYear();
+    const m = String(props.selectedDate.getMonth() + 1).padStart(2, "0");
+    const prefix = `${y}-${m}-`;
+    return props.allPurchases
+      .filter((p: Purchase) => p.issue_date.startsWith(prefix))
+      .reduce((sum: number, p: Purchase) => sum + p.total_amount, 0);
+  }
+
+  function tryRemoveSupplier(supplier: Supplier) {
+    const y = props.selectedDate.getFullYear();
+    const m = String(props.selectedDate.getMonth() + 1).padStart(2, "0");
+    const prefix = `${y}-${m}-`;
+
+    const hasPurchases = props.allPurchases.some(
+      (p: Purchase) =>
+        p.supplier_id === supplier.id && p.issue_date.startsWith(prefix),
+    );
+
+    if (hasPurchases) {
+      notifications.show(
+        "No se puede eliminar",
+        "El proveedor tiene registros de compra en este mes.",
+        "warning",
+      );
+    } else {
+      if (props.onRemoveSupplier) {
+        props.onRemoveSupplier(supplier.id);
+      }
+    }
+  }
 </script>
 
-<div class="w-full h-full pb-8">
-  <h1 class="text-3xl font-bold mb-6">Tabla de Compras</h1>
-  
-  <div class="overflow-x-auto bg-base-100 shadow-xl rounded-box border border-base-300 w-full h-full max-h-[70vh]">
+<div class="w-full flex-1 flex flex-col min-h-0 pb-2">
+  <div
+    class="overflow-auto bg-base-100 shadow-xl rounded-box border border-base-300 w-full flex-1 min-h-0"
+  >
     <!-- table-pin-rows fija los headers arriba, table-pin-cols fija la primera columna a la izquierda -->
     <table class="table table-zebra table-pin-rows table-pin-cols w-full">
-      
       <!-- HEADER DOBLE FILA -->
       <thead>
         <!-- FILA 1: Celda combinada -->
-        <tr class="bg-base-200">
-          <!-- Esquina superior izquierda -->
-          <th class="bg-base-300 border-r border-base-300 w-40 z-20">Fecha</th>
-          
+        <tr class="bg-base-200" style="z-index: 50;">
+          <th
+            class="bg-base-300 border-r border-base-300 min-w-[150px] max-w-[150px]"
+            style="position: sticky; left: 0; width: 150px; z-index: 60;"
+            >Fecha
+          </th>
+          <th
+            class="bg-base-300 border-r border-base-300 min-w-[150px] max-w-[150px]"
+            style="position: sticky; left: 150px; width: 150px; z-index: 60;"
+            >Total Día</th
+          >
+
           <!-- Celda Combinada usando 'colspan' -->
-          <th colspan={proveedores.length} class="text-center bg-base-200 text-lg uppercase tracking-wider font-bold border-b border-base-300">
+          <th
+            colspan={props.activeSuppliers.length || 1}
+            class="!right-auto text-center bg-base-200 text-lg uppercase tracking-wider font-bold border-b border-base-300"
+          >
             Proveedores
           </th>
         </tr>
-        
+
         <!-- FILA 2: Lista de proveedores -->
-        <tr class="bg-base-200 shadow-sm">
-          <th class="bg-base-300 border-r border-base-300"></th> <!-- Espacio vacío bajo 'Fecha' -->
-          
-          {#each proveedores as proveedor}
-            <th class="text-center min-w-[200px] border-r border-base-300 last:border-r-0">
-              {proveedor}
+        <tr class="bg-base-200 shadow-sm" style="z-index: 50;">
+          <th
+            class="bg-base-300 border-r border-base-300"
+            style="position: sticky; left: 0; width: 150px; z-index: 60;"
+          ></th>
+          <th
+            class="bg-base-300 border-r border-base-300"
+            style="position: sticky; left: 150px; width: 150px; z-index: 60;"
+          ></th>
+          <!-- Celdas Dinámicas (Nombres de Proveedores) -->
+          {#if props.activeSuppliers.length === 0}
+            <th class="text-center text-sm font-normal opacity-60 bg-base-100">
+              Usa el botón "Agregar proveedor" para añadir columnas a la tabla
             </th>
-          {/each}
+          {:else}
+            {#each props.activeSuppliers as proveedor (proveedor.id)}
+              <th
+                class="!right-auto text-center min-w-[100px] border-r border-base-300 last:border-r-0 group relative"
+                style="position: relative; z-index: 50;"
+              >
+                <span class={getTextColor(proveedor.color)}>
+                  {proveedor.name}
+                </span>
+
+                <!-- Botón de editar -->
+                <button
+                  class="absolute top-1/2 -translate-y-1/2 right-7 opacity-0 group-hover:opacity-100 btn btn-xs btn-ghost btn-circle text-success transition-opacity"
+                  onclick={() => {
+                    if (props.onEditSupplier) props.onEditSupplier(proveedor);
+                  }}
+                  title="Editar proveedor"
+                >
+                  <Pencil size={14} />
+                </button>
+
+                <!-- Botón de ocultar -->
+                <button
+                  class="absolute top-1/2 -translate-y-1/2 right-1 opacity-0 group-hover:opacity-100 btn btn-xs btn-ghost btn-circle text-error transition-opacity"
+                  onclick={() => tryRemoveSupplier(proveedor)}
+                  title="Ocultar de la tabla"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </th>
+            {/each}
+          {/if}
         </tr>
       </thead>
-      
+
       <!-- CUERPO DE LA TABLA (Días del mes) -->
       <tbody>
-        {#each dias as dia}
+        {#each dias as dia, i (dia)}
+          {@const y = props.selectedDate.getFullYear()}
+          {@const m = String(props.selectedDate.getMonth() + 1).padStart(
+            2,
+            "0",
+          )}
+          {@const d = String(i + 1).padStart(2, "0")}
+          {@const dateStr = `${y}-${m}-${d}`}
+
           <tr class="hover">
             <!-- Primera columna (Fecha - se queda fija al scrollear a la derecha) -->
-            <th class="bg-base-200 border-r border-base-300 whitespace-nowrap">{dia}</th>
-            
+            <td
+              class="bg-base-200 border-r border-base-300 whitespace-nowrap min-w-[150px] max-w-[150px]"
+              style="position: sticky; left: 0; width: 150px;">{dia}</td
+            >
+
+            <!-- Segunda columna (Total del día - se queda fija) -->
+            <td
+              class="bg-base-200 border-r border-base-300 font-bold whitespace-nowrap min-w-[150px] max-w-[150px]"
+              style="position: sticky; left: 150px; width: 150px;"
+            >
+              $ {getDayTotal(dateStr).toFixed(2)}
+            </td>
+
             <!-- Celdas de datos para cada proveedor -->
-            {#each proveedores as _}
-              <td class="text-center border-r border-base-300 last:border-r-0 cursor-pointer hover:bg-primary/10 transition-colors">
-                <span class="opacity-40 text-sm italic">$ 0.00</span>
+            {#if props.activeSuppliers.length === 0}
+              <td
+                class="text-center border-r border-base-300 last:border-r-0 cursor-pointer bg-base-100"
+              >
               </td>
-            {/each}
+            {:else}
+              {#each props.activeSuppliers as proveedor (proveedor.id)}
+                {@const existingPurchase = getPurchase(proveedor.id, dateStr)}
+
+                <td
+                  class="text-center border-r border-base-300 last:border-r-0 cursor-pointer hover:bg-primary/10 transition-colors"
+                  class:bg-success:={existingPurchase &&
+                    existingPurchase.status === "PAID"}
+                  class:bg-success-content:={existingPurchase &&
+                    existingPurchase.status === "PAID"}
+                  class:bg-warning:={existingPurchase &&
+                    existingPurchase.status === "PENDING"}
+                  class:bg-warning-content:={existingPurchase &&
+                    existingPurchase.status === "PENDING"}
+                  onclick={() => {
+                    if (props.onCellClick) {
+                      props.onCellClick(dateStr, proveedor, existingPurchase);
+                    }
+                  }}
+                >
+                  {#if existingPurchase}
+                    <span class="font-medium text-sm">
+                      $ {existingPurchase.total_amount.toFixed(2)}
+                    </span>
+                  {:else}
+                    <span class="opacity-40 text-sm italic">-</span>
+                  {/if}
+                </td>
+              {/each}
+            {/if}
           </tr>
         {/each}
       </tbody>
-      
+
+      <!-- FOOTER DE LA TABLA (Totales mensuales fijos abajo) -->
+      <tfoot>
+        <tr
+          class="bg-base-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]"
+          style="z-index: 50;"
+        >
+          <th
+            class="bg-base-300 border-r border-t border-base-300 whitespace-nowrap font-bold uppercase min-w-[150px] max-w-[150px]"
+            style="position: sticky; left: 0; width: 150px; z-index: 60;"
+            >Total Mensual</th
+          >
+          <th
+            class="bg-base-300 border-r border-t border-base-300 font-bold text-lg text-primary min-w-[150px] max-w-[150px]"
+            style="position: sticky; left: 150px; width: 150px; z-index: 60;"
+          >
+            $ {getMonthTotal().toFixed(2)}
+          </th>
+
+          {#if props.activeSuppliers.length === 0}
+            <th class="text-center bg-base-100 border-t border-base-300"></th>
+          {:else}
+            {#each props.activeSuppliers as proveedor (proveedor.id)}
+              <th
+                class="!right-auto text-center border-r border-t border-base-300 last:border-r-0 font-bold text-lg text-success"
+              >
+                $ {getSupplierTotal(proveedor.id).toFixed(2)}
+              </th>
+            {/each}
+          {/if}
+        </tr>
+      </tfoot>
     </table>
   </div>
 </div>
