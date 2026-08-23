@@ -1,0 +1,2 @@
+ALTER TABLE suppliers
+ADD COLUMN color TEXT DEFAULT 'BLACK' CHECK (color IN ('RED', 'BLUE', 'GREEN', 'BLACK', 'ORANGE'));
