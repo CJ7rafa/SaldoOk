@@ -4,14 +4,26 @@
   import "flatpickr/dist/flatpickr.min.css";
   import { Spanish } from "flatpickr/dist/l10n/es.js";
 
+  let { selectedDate, onDateChange } = $props<{ selectedDate: Date, onDateChange: (d: Date) => void }>();
+
   let calendarContainer: HTMLDivElement;
 
   onMount(() => {
     const fp = flatpickr(calendarContainer, {
       inline: true,
       locale: Spanish,
-      onChange: (selectedDates, dateStr) => {
-        console.log("Fecha seleccionada:", dateStr);
+      defaultDate: selectedDate,
+      maxDate: "today", // Bloquea fechas futuras
+      onChange: (selectedDates) => {
+        if (selectedDates.length > 0) {
+          onDateChange(selectedDates[0]);
+        }
+      },
+      onMonthChange: (_, __, instance) => {
+        onDateChange(new Date(instance.currentYear, instance.currentMonth, 1));
+      },
+      onYearChange: (_, __, instance) => {
+        onDateChange(new Date(instance.currentYear, instance.currentMonth, 1));
       }
     });
 
