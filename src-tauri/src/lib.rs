@@ -1,3 +1,6 @@
+mod models;
+mod commands;
+
 use rusqlite::Connection;
 use rusqlite_migration::{Migrations, M};
 use std::fs;
@@ -8,6 +11,7 @@ use tauri::Manager;
 fn get_migrations() -> Migrations<'static> {
     Migrations::new(vec![
         M::up(include_str!("../migrations/01_initial.sql")),
+        M::up(include_str!("../migrations/02_add_supplier_color.sql")),
     ])
 }
 
@@ -18,6 +22,20 @@ pub struct AppState {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .invoke_handler(tauri::generate_handler![
+        commands::get_suppliers,
+        commands::create_supplier,
+        commands::update_supplier,
+        commands::delete_supplier,
+        commands::get_purchases,
+        commands::create_purchase,
+        commands::update_purchase,
+        commands::delete_purchase,
+        commands::get_purchase_payments,
+        commands::create_purchase_payment,
+        commands::update_purchase_payment,
+        commands::delete_purchase_payment
+    ])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(
