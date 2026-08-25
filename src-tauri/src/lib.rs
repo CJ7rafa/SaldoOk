@@ -12,6 +12,7 @@ fn get_migrations() -> Migrations<'static> {
     Migrations::new(vec![
         M::up(include_str!("../migrations/01_initial.sql")),
         M::up(include_str!("../migrations/02_add_supplier_color.sql")),
+        M::up(include_str!("../migrations/03_add_all_system_expenses.sql")),
     ])
 }
 
