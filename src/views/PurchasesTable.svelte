@@ -18,11 +18,16 @@
 
   function getTextColor(color: string) {
     switch (color) {
-      case "RED": return "text-red-500";
-      case "BLUE": return "text-blue-500";
-      case "GREEN": return "text-emerald-500";
-      case "ORANGE": return "text-orange-500";
-      default: return "";
+      case "RED":
+        return "text-red-500";
+      case "BLUE":
+        return "text-blue-500";
+      case "GREEN":
+        return "text-emerald-500";
+      case "ORANGE":
+        return "text-orange-500";
+      default:
+        return "";
     }
   }
 
@@ -110,6 +115,13 @@
         props.onRemoveSupplier(supplier.id);
       }
     }
+  }
+
+  function formatCurrency(amount: number): string {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
   }
 </script>
 
@@ -213,10 +225,10 @@
 
             <!-- Segunda columna (Total del día - se queda fija) -->
             <td
-              class="bg-base-200 border-r border-base-300 font-bold whitespace-nowrap min-w-[150px] max-w-[150px]"
+              class="bg-base-200 border-r text-right border-base-300 font-bold whitespace-nowrap min-w-[150px] max-w-[150px]"
               style="position: sticky; left: 150px; width: 150px;"
             >
-              $ {getDayTotal(dateStr).toFixed(2)}
+              {formatCurrency(getDayTotal(dateStr))}
             </td>
 
             <!-- Celdas de datos para cada proveedor -->
@@ -247,7 +259,7 @@
                 >
                   {#if existingPurchase}
                     <span class="font-medium text-sm">
-                      $ {existingPurchase.total_amount.toFixed(2)}
+                      {formatCurrency(existingPurchase.total_amount)}
                     </span>
                   {:else}
                     <span class="opacity-40 text-sm italic">-</span>
