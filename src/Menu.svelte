@@ -3,73 +3,21 @@
   import Header from "./components/Header.svelte";
   import PurchasesTable from "./views/PurchasesTable.svelte";
   import DatePicker from "./components/right-panel/DatePicker.svelte";
-  import AddSupplier from "./components/right-panel/AddSupplier.svelte";
-  import ManageSupplier from "./components/right-panel/ManageSupplier.svelte";
-  import AddPurchase from "./components/right-panel/AddPurchase.svelte";
+  import AddSupplier from "./components/right-panel/purchase/AddSupplier.svelte";
+  import ManageSupplier from "./components/right-panel/purchase/ManageSupplier.svelte";
+  import AddPurchase from "./components/right-panel/purchase/AddPurchase.svelte";
   import ToastContainer from "./components/ToastContainer.svelte";
 
-  import type { Supplier, Purchase } from "./types.ts";
   import { onMount } from "svelte";
-  import { invoke } from "@tauri-apps/api/core";
 
-  // Estado del layout
-  let isPanelOpen = $state(false);
-  let selectedDate = $state(new Date());
-  let rightPanelView = $state<
-    "calendar" | "manageSupplier" | "addSupplier" | "addPurchase"
-  >("calendar");
-
-  // Estado de la tabla de compras
-  let allSuppliersMaster = $state<Supplier[]>([]);
-  let manuallyAddedSuppliers = $state<Supplier[]>([]);
-  let allPurchases = $state<Purchase[]>([]);
-  let selectedPurchaseCell = $state<{
-    dateStr: string;
-    supplier: Supplier;
-    existingPurchase?: Purchase;
-  } | null>(null);
-  let selectedSupplierToEdit = $state<Supplier | null>(null);
-
-  // Computar proveedores activos automáticamente usando la lista maestra
-  let activeSuppliers = $derived(() => {
-    const y = selectedDate.getFullYear();
-    const m = String(selectedDate.getMonth() + 1).padStart(2, "0");
-    const prefix = `${y}-${m}-`;
-
-    const activeIds = new Set<number>();
-
-    // 1. Filtrar IDs de proveedores con compras en este mes
-    for (const p of allPurchases) {
-      if (p.issue_date.startsWith(prefix)) {
-        activeIds.add(p.supplier_id);
-      }
-    }
-
-    // 2. Añadir IDs proveedores insertados manualmente
-    for (const s of manuallyAddedSuppliers) {
-      activeIds.add(s.id);
-    }
-
-    // 3. Obtener los proveedores reales desde nuestra lista maestra (que ya tiene color, etc)
-    const result = allSuppliersMaster.filter((s) => activeIds.has(s.id));
-    result.sort((a, b) => a.name.localeCompare(b.name));
-    return result;
-  });
-
-  async function loadData() {
-    try {
-      allSuppliersMaster = await invoke<Supplier[]>("get_suppliers");
-      allPurchases = await invoke<Purchase[]>("get_purchases");
-    } catch (e) {
-      console.error("Error cargando compras:", e);
-    }
-  }
+  // Aquí está la magia: Importamos todo nuestro estado global desde un solo archivo
+  import { appState } from "./lib/appState.svelte";
 
   onMount(() => {
-    loadData();
+    appState.loadData();
   });
 
-  // Estado del enrutador inteligente (historial)
+  // Estado del enrutador inteligente (historial) - Este lo dejamos aquí porque es exclusivo visual de este componente
   let history = $state<string[]>(["menu"]);
 
   // Computed: vista actual
@@ -101,7 +49,7 @@
 >
   <!-- COLUMNA IZQUIERDA (Principal) -->
   <section
-    class="h-full flex flex-col transition-all duration-300 bg-base-100 {isPanelOpen
+    class="h-full flex flex-col transition-all duration-300 bg-base-100 {appState.isPanelOpen
       ? 'w-[75%]'
       : 'w-full'}"
   >
@@ -112,12 +60,12 @@
       onBack={goBack}
       {currentView}
       onRegisterSupplier={() => {
-        isPanelOpen = true;
-        rightPanelView = "manageSupplier";
+        appState.isPanelOpen = true;
+        appState.rightPanelView = "manageSupplier";
       }}
       onAddSupplier={() => {
-        isPanelOpen = true;
-        rightPanelView = "addSupplier";
+        appState.isPanelOpen = true;
+        appState.rightPanelView = "addSupplier";
       }}
     />
 
@@ -134,7 +82,6 @@
           </p>
 
           <div class="grid grid-cols-5 gap-4 w-full">
-            <!-- BOTÓN 1: Tabla de Compras -->
             <button
               onclick={() => navigateTo("tablacompras")}
               class="h-32 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-box flex items-center justify-center transition-colors cursor-pointer"
@@ -142,35 +89,34 @@
               <span class="font-bold text-primary">Tabla de Compras</span>
             </button>
 
-            <!-- BOTONES de Relleno -->
-            {#each Array(4) as _, i}
-              <button
-                class="h-32 bg-base-100 hover:bg-base-300 shadow-sm border border-base-300 rounded-box flex items-center justify-center transition-colors"
-              >
-                Módulo {i + 2}
-              </button>
-            {/each}
+            <button
+              onclick={() => navigateTo("tablacompras")}
+              class="h-32 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-box flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <span class="font-bold text-primary">Tabla de Gastos</span>
+            </button>
           </div>
         </div>
       {:else if currentView === "tablacompras"}
         <PurchasesTable
-          {selectedDate}
-          activeSuppliers={activeSuppliers()}
-          {allPurchases}
+          selectedDate={appState.selectedDate}
+          activeSuppliers={appState.activeSuppliers}
+          allPurchases={appState.allPurchases}
           onCellClick={(dateStr, supplier, existingPurchase) => {
-            selectedPurchaseCell = { dateStr, supplier, existingPurchase };
-            isPanelOpen = true;
-            rightPanelView = "addPurchase";
+            appState.selectedPurchaseCell = {
+              dateStr,
+              supplier,
+              existingPurchase,
+            };
+            appState.isPanelOpen = true;
+            appState.rightPanelView = "addPurchase";
           }}
-          onRemoveSupplier={(supplierId) => {
-            manuallyAddedSuppliers = manuallyAddedSuppliers.filter(
-              (s) => s.id !== supplierId,
-            );
-          }}
+          onRemoveSupplier={(supplierId) =>
+            appState.removeManualSupplier(supplierId)}
           onEditSupplier={(supplier) => {
-            selectedSupplierToEdit = supplier;
-            isPanelOpen = true;
-            rightPanelView = "manageSupplier";
+            appState.selectedSupplierToEdit = supplier;
+            appState.isPanelOpen = true;
+            appState.rightPanelView = "manageSupplier";
           }}
         />
       {/if}
@@ -179,7 +125,7 @@
 
   <!-- COLUMNA DERECHA (Panel Lateral) -->
   <aside
-    class="h-full bg-base-100 shadow-2xl transition-all duration-300 flex flex-col overflow-hidden {isPanelOpen
+    class="h-full bg-base-100 shadow-2xl transition-all duration-300 flex flex-col overflow-hidden {appState.isPanelOpen
       ? 'w-[25%] border-l border-base-300'
       : 'w-0 border-none'}"
   >
@@ -190,7 +136,10 @@
         <h2 class="font-bold text-lg">Panel de Acciones</h2>
         <button
           class="btn btn-ghost btn-sm btn-square"
-          onclick={() => (isPanelOpen = false)}
+          onclick={() => {
+            appState.isPanelOpen = false;
+            appState.rightPanelView = "calendar";
+          }}
         >
           <X size={20} />
         </button>
@@ -199,59 +148,44 @@
       <div
         class="p-4 space-y-4 overflow-y-auto overflow-x-hidden flex-1 bg-base-100"
       >
-        {#if rightPanelView === "calendar"}
-          <!-- DatePicker Calendar -->
-          <DatePicker {selectedDate} onDateChange={(d) => (selectedDate = d)} />
-
-          <div class="divider"></div>
-
-          <p class="text-sm opacity-70">
-            Aquí cargaremos dinámicamente formularios como "Agregar Proveedor".
-          </p>
-          {#each Array(10) as _, i}
-            <button
-              class="w-full p-3 bg-base-200 hover:bg-base-300 transition-colors rounded-lg text-sm text-left truncate"
-            >
-              Configuración {i + 1}
-            </button>
-          {/each}
-        {:else if rightPanelView === "manageSupplier"}
-          {#key selectedSupplierToEdit?.id}
+        {#if appState.rightPanelView === "calendar"}
+          <DatePicker
+            selectedDate={appState.selectedDate}
+            onDateChange={(d) => (appState.selectedDate = d)}
+          />
+        {:else if appState.rightPanelView === "manageSupplier"}
+          {#key appState.selectedSupplierToEdit?.id}
             <ManageSupplier
-              initialEditSupplier={selectedSupplierToEdit}
+              initialEditSupplier={appState.selectedSupplierToEdit}
               onClose={() => {
-                rightPanelView = "calendar";
-                selectedSupplierToEdit = null;
+                appState.rightPanelView = "calendar";
+                appState.selectedSupplierToEdit = null;
               }}
               onSuccess={() => {
-                // Si se editó con éxito, recargamos los datos para actualizar nombres y colores
-                loadData();
-                rightPanelView = "calendar";
-                selectedSupplierToEdit = null;
+                appState.loadData();
+                appState.rightPanelView = "calendar";
+                appState.selectedSupplierToEdit = null;
               }}
             />
           {/key}
-        {:else if rightPanelView === "addSupplier"}
+        {:else if appState.rightPanelView === "addSupplier"}
           <AddSupplier
-            activeSuppliers={activeSuppliers()}
-            onClose={() => (rightPanelView = "calendar")}
-            onAdd={(supplier) => {
-              manuallyAddedSuppliers.push(supplier);
-              rightPanelView = "calendar";
-            }}
+            activeSuppliers={appState.activeSuppliers}
+            onClose={() => (appState.rightPanelView = "calendar")}
+            onAdd={(supplier) => appState.addManualSupplier(supplier)}
           />
-        {:else if rightPanelView === "addPurchase" && selectedPurchaseCell}
-          {#key selectedPurchaseCell}
+        {:else if appState.rightPanelView === "addPurchase" && appState.selectedPurchaseCell}
+          {#key appState.selectedPurchaseCell}
             <AddPurchase
-              dateStr={selectedPurchaseCell.dateStr}
-              supplier={selectedPurchaseCell.supplier}
-              existingPurchase={selectedPurchaseCell.existingPurchase}
+              dateStr={appState.selectedPurchaseCell.dateStr}
+              supplier={appState.selectedPurchaseCell.supplier}
+              existingPurchase={appState.selectedPurchaseCell.existingPurchase}
               onClose={() => {
-                rightPanelView = "calendar";
-                selectedPurchaseCell = null;
+                appState.rightPanelView = "calendar";
+                appState.selectedPurchaseCell = null;
               }}
               onSuccess={() => {
-                loadData();
+                appState.loadData();
               }}
             />
           {/key}
@@ -261,10 +195,10 @@
   </aside>
 
   <!-- BURBUJA PARA ABRIR EL PANEL -->
-  {#if !isPanelOpen}
+  {#if !appState.isPanelOpen}
     <button
       class="absolute right-0 top-1/2 -translate-y-1/2 bg-primary text-primary-content hover:brightness-110 transition-all rounded-l-full w-10 h-16 shadow-lg z-50 flex items-center justify-start pl-1 cursor-pointer border-none"
-      onclick={() => (isPanelOpen = true)}
+      onclick={() => (appState.isPanelOpen = true)}
     >
       <ChevronLeft size={24} />
     </button>
