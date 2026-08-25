@@ -1,7 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
-  import { notifications } from "../../lib/notifications.svelte";
-  import type { Supplier } from "../../types";
+  import { notifications } from "../../../lib/notifications.svelte";
+  import type { Supplier } from "../../../types";
   import { onMount } from "svelte";
 
   let { onClose, onSuccess, initialEditSupplier } = $props<{
@@ -146,7 +146,6 @@
       Gestionar Proveedores
     </h3>
   </div>
-
   <!-- SECCIÓN: AGREGAR PROVEEDOR -->
   <div class="bg-base-200 p-4 rounded-box mb-6 border border-base-300">
     <h4 class="font-bold text-sm mb-3">Agregar Nuevo Proveedor</h4>
@@ -183,13 +182,6 @@
     </div>
 
     <div class="flex gap-2">
-      <button
-        class="btn btn-ghost btn-sm flex-1"
-        onclick={onClose}
-        disabled={isAdding}
-      >
-        Cancelar
-      </button>
       <button
         class="btn btn-primary btn-sm flex-1"
         onclick={handleAdd}
@@ -272,13 +264,6 @@
 
         <div class="flex gap-2">
           <button
-            class="btn btn-ghost btn-sm flex-1"
-            onclick={() => (selectedSupplierId = "")}
-            disabled={isEditing}
-          >
-            Cancelar
-          </button>
-          <button
             class="btn btn-success btn-sm flex-1 text-success-content"
             onclick={handleEdit}
             disabled={isEditing || !nameToEdit.trim()}
@@ -292,4 +277,12 @@
       {/if}
     {/if}
   </div>
+
+  <button
+    class="btn btn-ghost btn-sm flex-1"
+    onclick={onClose}
+    disabled={isAdding}
+  >
+    Cancelar
+  </button>
 </div>

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
-  import type { Supplier } from "../../types";
+  import type { Supplier } from "../../../types";
 
   let { activeSuppliers, onClose, onAdd } = $props<{
     activeSuppliers: Supplier[];

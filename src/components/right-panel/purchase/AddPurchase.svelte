@@ -1,7 +1,8 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
-  import { notifications } from "../../lib/notifications.svelte";
-  import type { Supplier, Purchase } from "../../types";
+  import { notifications } from "../../../lib/notifications.svelte";
+  import type { Supplier, Purchase } from "../../../types";
+  import { imask } from "svelte-imask";
 
   let { dateStr, supplier, existingPurchase, onClose, onSuccess } = $props<{
     dateStr: string;
@@ -12,11 +13,28 @@
   }>();
 
   let invoiceNumber = $state(existingPurchase?.invoice_number || "");
-  let totalAmount = $state(existingPurchase ? String(existingPurchase.total_amount) : "");
+  let totalAmount = $state(
+    existingPurchase ? String(existingPurchase.total_amount) : "",
+  );
   let paymentType = $state(existingPurchase?.payment_type || "CASH");
   let status = $state(existingPurchase?.status || "PAID");
   let notes = $state(existingPurchase?.notes || "");
   let isLoading = $state(false);
+
+  const currencyOptions = {
+    mask: Number,
+    scale: 2,
+    signed: false,
+    thousandsSeparator: ",",
+    padFractionalZeros: true,
+    normalizeZeros: true,
+    radix: ".",
+    mapToRadix: ["."],
+  };
+
+  function handleAmountAccept(e: CustomEvent) {
+    totalAmount = e.detail.unmaskedValue;
+  }
 
   async function handleAceptar() {
     const amount = parseFloat(totalAmount);
@@ -45,12 +63,20 @@
 
       if (existingPurchase?.id) {
         await invoke("update_purchase", { purchase });
-        notifications.show("¡Actualizado!", "Compra actualizada correctamente", "success");
+        notifications.show(
+          "¡Actualizado!",
+          "Compra actualizada correctamente",
+          "success",
+        );
       } else {
         await invoke("create_purchase", { purchase });
-        notifications.show("¡Éxito!", "Compra registrada correctamente", "success");
+        notifications.show(
+          "¡Éxito!",
+          "Compra registrada correctamente",
+          "success",
+        );
       }
-      
+
       if (onSuccess) onSuccess();
       onClose(); // Todo salió bien, regresamos al calendario
     } catch (err) {
@@ -63,7 +89,7 @@
 
 <div class="flex flex-col h-full">
   <h3 class="font-bold mb-6 text-sm uppercase opacity-70">
-    {existingPurchase ? 'Editar Compra' : 'Agregar Compra'}
+    {existingPurchase ? "Editar Compra" : "Agregar Compra"}
   </h3>
 
   <div class="flex-1 overflow-y-auto pr-2 space-y-4">
@@ -107,12 +133,12 @@
       </label>
       <input
         id="totalAmount"
-        type="number"
-        step="0.01"
-        min="0"
+        type="text"
         placeholder="Ej. 150.50"
-        class="input input-bordered w-full font-mono"
-        bind:value={totalAmount}
+        class="input input-bordered w-full font-mono text-right"
+        use:imask={currencyOptions}
+        onaccept={handleAmountAccept}
+        value={totalAmount}
         disabled={isLoading}
       />
     </div>
