@@ -23,20 +23,7 @@ pub struct AppState {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![
-        commands::get_suppliers,
-        commands::create_supplier,
-        commands::update_supplier,
-        commands::delete_supplier,
-        commands::get_purchases,
-        commands::create_purchase,
-        commands::update_purchase,
-        commands::delete_purchase,
-        commands::get_purchase_payments,
-        commands::create_purchase_payment,
-        commands::update_purchase_payment,
-        commands::delete_purchase_payment
-    ])
+    .invoke_handler(commands::get_handlers())
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(
