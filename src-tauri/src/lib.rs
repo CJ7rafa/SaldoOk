@@ -13,6 +13,7 @@ fn get_migrations() -> Migrations<'static> {
         M::up(include_str!("../migrations/01_initial.sql")),
         M::up(include_str!("../migrations/02_add_supplier_color.sql")),
         M::up(include_str!("../migrations/03_add_all_system_expenses.sql")),
+        M::up(include_str!("../migrations/04_drop_created_at_from_expenses.sql")),
     ])
 }
 
