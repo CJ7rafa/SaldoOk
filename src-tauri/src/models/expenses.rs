@@ -8,5 +8,4 @@ pub struct Expense {
     pub amount: f64,
     pub expense_date: String,
     pub notes: Option<String>,
-    pub created_at: Option<String>,
 }
