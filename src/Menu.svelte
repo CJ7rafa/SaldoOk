@@ -2,11 +2,17 @@
   import { ChevronLeft, X } from "@lucide/svelte";
   import Header from "./components/Header.svelte";
   import PurchasesTable from "./views/PurchasesTable.svelte";
+  import ExpensesTable from "./views/ExpenesTable.svelte";
   import DatePicker from "./components/right-panel/DatePicker.svelte";
   import AddSupplier from "./components/right-panel/purchase/AddSupplier.svelte";
   import ManageSupplier from "./components/right-panel/purchase/ManageSupplier.svelte";
   import AddPurchase from "./components/right-panel/purchase/AddPurchase.svelte";
+  import ManageCategories from "./components/right-panel/expense/ManageCategories.svelte";
+  import ManageSpender from "./components/right-panel/expense/ManageSpender.svelte";
+  import AddSpenderCategories from "./components/right-panel/expense/AddSpender-Categories.svelte";
+  import AddExpense from "./components/right-panel/expense/AddExpense.svelte";
   import ToastContainer from "./components/ToastContainer.svelte";
+  import ConfirmationModal from "./components/ConfirmationModal.svelte";
 
   import { onMount } from "svelte";
 
@@ -30,7 +36,9 @@
       ? "Menú Principal"
       : currentView === "tablacompras"
         ? "Gestión de Compras"
-        : "SaldoOk",
+        : currentView === "tablagastos"
+          ? "Gestión de Gastos"
+          : "SaldoOk",
   );
 
   function navigateTo(view: string) {
@@ -67,6 +75,18 @@
         appState.isPanelOpen = true;
         appState.rightPanelView = "addSupplier";
       }}
+      onManageCategories={() => {
+        appState.isPanelOpen = true;
+        appState.rightPanelView = "manageCategories";
+      }}
+      onManageSpenders={() => {
+        appState.isPanelOpen = true;
+        appState.rightPanelView = "manageSpender";
+      }}
+      onAddSpenderCategory={() => {
+        appState.isPanelOpen = true;
+        appState.rightPanelView = "addSpenderCategory";
+      }}
     />
 
     <!-- CONTENIDO DINÁMICO (Scrollable) -->
@@ -90,7 +110,7 @@
             </button>
 
             <button
-              onclick={() => navigateTo("tablacompras")}
+              onclick={() => navigateTo("tablagastos")}
               class="h-32 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-box flex items-center justify-center transition-colors cursor-pointer"
             >
               <span class="font-bold text-primary">Tabla de Gastos</span>
@@ -117,6 +137,29 @@
             appState.selectedSupplierToEdit = supplier;
             appState.isPanelOpen = true;
             appState.rightPanelView = "manageSupplier";
+          }}
+        />
+      {:else if currentView === "tablagastos"}
+        <ExpensesTable
+          selectedDate={appState.selectedDate}
+          activeSpenderGroups={appState.activeSpenderGroups}
+          allExpenses={appState.allExpenses}
+          onCellClick={(dateStr, spender, category, existingExpense) => {
+            appState.selectedExpenseCell = {
+              dateStr,
+              spender,
+              category,
+              existingExpense,
+            };
+            appState.isPanelOpen = true;
+            appState.rightPanelView = "addExpense";
+          }}
+          onRemoveSpenderCategory={(spenderId, categoryId) =>
+            appState.removeManualSpenderCategory(spenderId, categoryId)}
+          onEditCategory={(category) => {
+            appState.selectedCategoryToEdit = category;
+            appState.isPanelOpen = true;
+            appState.rightPanelView = "manageCategories";
           }}
         />
       {/if}
@@ -189,6 +232,27 @@
               }}
             />
           {/key}
+        {:else if appState.rightPanelView === "manageCategories"}
+          <ManageCategories
+            onClose={() => (appState.rightPanelView = "calendar")}
+          />
+        {:else if appState.rightPanelView === "manageSpender"}
+          <ManageSpender
+            onClose={() => (appState.rightPanelView = "calendar")}
+          />
+        {:else if appState.rightPanelView === "addSpenderCategory"}
+          <AddSpenderCategories
+            onClose={() => (appState.rightPanelView = "calendar")}
+          />
+        {:else if appState.rightPanelView === "addExpense" && appState.selectedExpenseCell}
+          <AddExpense
+            dateStr={appState.selectedExpenseCell.dateStr}
+            spender={appState.selectedExpenseCell.spender}
+            category={appState.selectedExpenseCell.category}
+            existingExpense={appState.selectedExpenseCell.existingExpense}
+            onClose={() => (appState.rightPanelView = "calendar")}
+            onSuccess={() => appState.loadData()}
+          />
         {/if}
       </div>
     </div>
@@ -206,4 +270,5 @@
 
   <!-- NOTIFICACIONES GLOBALES -->
   <ToastContainer />
+  <ConfirmationModal />
 </main>
