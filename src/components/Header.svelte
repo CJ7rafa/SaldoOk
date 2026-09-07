@@ -8,6 +8,9 @@
     currentView,
     onRegisterSupplier,
     onAddSupplier,
+    onManageCategories,
+    onManageSpenders,
+    onAddSpenderCategory,
   } = $props<{
     canGoBack: boolean;
     onBack: () => void;
@@ -15,6 +18,9 @@
     currentView?: string;
     onRegisterSupplier?: () => void;
     onAddSupplier?: () => void;
+    onManageCategories?: () => void;
+    onManageSpenders?: () => void;
+    onAddSpenderCategory?: () => void;
   }>();
 </script>
 
@@ -32,14 +38,30 @@
   </div>
 
   {#if currentView === "tablacompras"}
-    <button class="btn btn-primary btn-sm" onclick={onRegisterSupplier}>
-      <UserPlus size={16} />
-      Gestionar Proveedores
-    </button>
+    <div class="flex gap-2">
+      <button class="btn btn-primary btn-sm" onclick={onRegisterSupplier}>
+        <UserPlus size={16} />
+        Gestionar Proveedores
+      </button>
 
-    <button class="btn btn-primary btn-sm" onclick={onAddSupplier}>
-      <UserPlus size={16} />
-      Agregar proveedor a la tabla
-    </button>
+      <button class="btn btn-primary btn-sm" onclick={onAddSupplier}>
+        <UserPlus size={16} />
+        Agregar proveedor a la tabla
+      </button>
+    </div>
+  {:else if currentView === "tablagastos"}
+    <div class="flex gap-2">
+      <button class="btn btn-primary btn-sm btn-outline" onclick={onManageCategories}>
+        Gestionar Categoría
+      </button>
+
+      <button class="btn btn-primary btn-sm btn-outline" onclick={onManageSpenders}>
+        Gestionar Persona
+      </button>
+
+      <button class="btn btn-primary btn-sm" onclick={onAddSpenderCategory}>
+        Agregar a la tabla
+      </button>
+    </div>
   {/if}
 </header>
