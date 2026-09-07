@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import { notifications } from "../../../lib/notifications.svelte";
+  import { appState } from "../../../lib/appState.svelte";
   import type { Supplier } from "../../../types";
   import { onMount } from "svelte";
 
@@ -23,6 +24,7 @@
   let nameToEdit = $state("");
   let colorToEdit = $state("BLACK");
   let isEditing = $state(false);
+  let isDeleting = $state(false);
 
   const SUPPLIER_COLORS = [
     { id: "BLACK", class: "bg-slate-800" },
@@ -137,6 +139,51 @@
     } finally {
       isEditing = false;
     }
+  }
+
+  async function handleDelete() {
+    if (selectedSupplierId === "") return;
+
+    // Verificar si el proveedor tiene compras
+    const hasPurchases = appState.allPurchases.some(
+      (p) => p.supplier_id === selectedSupplierId,
+    );
+
+    if (hasPurchases) {
+      notifications.show(
+        "No se puede eliminar",
+        "El proveedor tiene registros de compra en la base de datos.",
+        "warning",
+      );
+      return;
+    }
+
+    notifications.confirmSafe(
+      "Eliminar Proveedor",
+      `¿Estás seguro de que quieres eliminar a "${nameToEdit.trim()}" permanentemente de la base de datos?`,
+      3,
+      async () => {
+        isDeleting = true;
+        try {
+          await invoke("delete_supplier", { id: selectedSupplierId });
+          notifications.show(
+            "Eliminado",
+            "El proveedor ha sido eliminado correctamente.",
+            "success",
+          );
+          notifications.closeConfirmation();
+
+          appState.loadData();
+          if (onSuccess) onSuccess();
+          else onClose();
+        } catch (err) {
+          notifications.show("Error al eliminar", String(err), "error");
+          notifications.closeConfirmation();
+        } finally {
+          isDeleting = false;
+        }
+      },
+    );
   }
 </script>
 
@@ -262,16 +309,24 @@
           </div>
         </div>
 
-        <div class="flex gap-2">
+        <div class="flex flex-col gap-2">
           <button
-            class="btn btn-success btn-sm flex-1 text-success-content"
+            class="btn btn-success btn-sm w-full text-success-content"
             onclick={handleEdit}
-            disabled={isEditing || !nameToEdit.trim()}
+            disabled={isEditing || !nameToEdit.trim() || isDeleting}
           >
             {#if isEditing}
               <span class="loading loading-spinner loading-xs"></span>
             {/if}
             Guardar
+          </button>
+
+          <button
+            class="btn btn-outline btn-error btn-sm w-full"
+            onclick={handleDelete}
+            disabled={isEditing || isDeleting}
+          >
+            Eliminar
           </button>
         </div>
       {/if}
@@ -279,7 +334,7 @@
   </div>
 
   <button
-    class="btn btn-ghost btn-sm flex-1"
+    class="btn btn-ghost btn-sm mt-auto w-full flex-shrink-0"
     onclick={onClose}
     disabled={isAdding}
   >
