@@ -34,20 +34,24 @@
   // Calculamos los días del mes reactivamente
   let dias = $derived(generarDias(props.selectedDate));
 
+  let currentMonthName = $derived(() => {
+    const monthName = props.selectedDate.toLocaleDateString("es-ES", {
+      month: "long",
+    });
+    return monthName.charAt(0).toUpperCase() + monthName.slice(1);
+  });
+
   function generarDias(fecha: Date) {
     const year = fecha.getFullYear();
     const month = fecha.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // toLocaleDateString suele ser más consistente que Intl
-    const monthName = fecha.toLocaleDateString("es-ES", { month: "long" });
-    const capitalizedMonthName =
-      monthName.charAt(0).toUpperCase() + monthName.slice(1);
-
-    return Array.from(
-      { length: daysInMonth },
-      (_, i) => `${capitalizedMonthName} ${i + 1}`,
-    );
+    return Array.from({ length: daysInMonth }, (_, i) => {
+      const date = new Date(year, month, i + 1);
+      const dayName = date.toLocaleDateString("es-ES", { weekday: "long" });
+      const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+      return { dayName: capitalizedDay, dayNumber: i + 1 };
+    });
   }
 
   // Helper para buscar compras y evitar errores de TS en el template
@@ -136,20 +140,24 @@
         <!-- FILA 1: Celda combinada -->
         <tr class="bg-base-200" style="z-index: 50;">
           <th
-            class="bg-base-300 border-r border-base-300 min-w-[150px] max-w-[150px]"
-            style="position: sticky; left: 0; width: 150px; z-index: 60;"
-            >Fecha
+            class="bg-base-300 border-r border-base-300 min-w-[120px] max-w-[120px] text-center"
+            style="position: sticky; left: 0; width: 120px; z-index: 60;"
+          >
+            <div class="text-xs uppercase opacity-70">Fecha</div>
+            <div class="text-x5 mt-2 text-primary">
+              {currentMonthName()}
+            </div>
           </th>
           <th
-            class="bg-base-300 border-r border-base-300 min-w-[150px] max-w-[150px]"
-            style="position: sticky; left: 150px; width: 150px; z-index: 60;"
+            class="bg-base-300 border-r border-base-300 min-w-[105px] max-w-[105px]"
+            style="position: sticky; left: 120px; width: 105px; z-index: 60;"
             >Total Día</th
           >
 
           <!-- Celda Combinada usando 'colspan' -->
           <th
             colspan={props.activeSuppliers.length || 1}
-            class="!right-auto text-center bg-base-200 text-lg uppercase tracking-wider font-bold border-b border-base-300"
+            class="!right-auto text-center bg-base-200 text-sm uppercase tracking-wider font-bold border-b border-base-300 py-1"
           >
             Proveedores
           </th>
@@ -159,11 +167,11 @@
         <tr class="bg-base-200 shadow-sm" style="z-index: 50;">
           <th
             class="bg-base-300 border-r border-base-300"
-            style="position: sticky; left: 0; width: 150px; z-index: 60;"
+            style="position: sticky; left: 0; width: 120px; z-index: 60;"
           ></th>
           <th
             class="bg-base-300 border-r border-base-300"
-            style="position: sticky; left: 150px; width: 150px; z-index: 60;"
+            style="position: sticky; left: 120px; width: 105px; z-index: 60;"
           ></th>
           <!-- Celdas Dinámicas (Nombres de Proveedores) -->
           {#if props.activeSuppliers.length === 0}
@@ -219,14 +227,24 @@
           <tr class="hover">
             <!-- Primera columna (Fecha - se queda fija al scrollear a la derecha) -->
             <td
-              class="bg-base-200 border-r border-base-300 whitespace-nowrap min-w-[150px] max-w-[150px]"
-              style="position: sticky; left: 0; width: 150px;">{dia}</td
+              class="bg-base-200 border-r border-base-300 whitespace-nowrap min-w-[120px] max-w-[120px]"
+              style="position: sticky; left: 0; width: 120px;"
             >
+              <div
+                class="flex justify-between items-center w-full {dia.dayName ===
+                'Domingo'
+                  ? 'text-error font-bold'
+                  : ''}"
+              >
+                <span>{dia.dayName}</span>
+                <span class="opacity-60">{dia.dayNumber}</span>
+              </div>
+            </td>
 
             <!-- Segunda columna (Total del día - se queda fija) -->
             <td
-              class="bg-base-200 border-r text-right border-base-300 font-bold whitespace-nowrap min-w-[150px] max-w-[150px]"
-              style="position: sticky; left: 150px; width: 150px;"
+              class="bg-base-200 border-r text-right border-base-300 font-bold whitespace-nowrap min-w-[105px] max-w-[105px]"
+              style="position: sticky; left: 120px; width: 105px;"
             >
               {formatCurrency(getDayTotal(dateStr))}
             </td>
@@ -278,13 +296,13 @@
           style="z-index: 50;"
         >
           <th
-            class="bg-base-300 border-r border-t border-base-300 whitespace-nowrap font-bold uppercase min-w-[150px] max-w-[150px]"
-            style="position: sticky; left: 0; width: 150px; z-index: 60;"
+            class="bg-base-300 border-r border-t border-base-300 whitespace-nowrap font-bold uppercase min-w-[120px] max-w-[120px]"
+            style="position: sticky; left: 0; width: 120px; z-index: 60;"
             >Total Mensual</th
           >
           <th
-            class="bg-base-300 border-r border-t border-base-300 font-bold text-lg text-primary min-w-[150px] max-w-[150px]"
-            style="position: sticky; left: 150px; width: 150px; z-index: 60;"
+            class="bg-base-300 border-r border-t border-base-300 font-bold text-lg text-primary min-w-[105px] max-w-[105px]"
+            style="position: sticky; left: 120px; width: 105px; z-index: 60;"
           >
             $ {getMonthTotal().toFixed(2)}
           </th>
