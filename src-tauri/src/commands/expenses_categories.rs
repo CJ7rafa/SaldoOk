@@ -50,14 +50,14 @@ pub fn get_all_expense_categories(state: State<'_, AppState>) -> Result<Vec<Expe
 pub fn get_expense_category_by_id(state: State<'_, AppState>, id: i64) -> Result<Option<ExpenseCategory>, String> {
     let db = state.db.lock().unwrap();
     let mut stmt = db.prepare("SELECT id, name, color, active FROM expense_categories WHERE id = ?1").map_err(map_db_error)?;
-    let mut rows = stmt.query(&[id]).map_err(map_db_error)?;
+    let mut rows = stmt.query([id]).map_err(map_db_error)?;
     
     if let Some(row) = rows.next().map_err(map_db_error)? {
         Ok(Some(ExpenseCategory {
-            id: row.get(0)?,
-            name: row.get(1)?,
-            color: row.get(2)?,
-            active: row.get(3)?,
+            id: row.get(0).map_err(map_db_error)?,
+            name: row.get(1).map_err(map_db_error)?,
+            color: row.get(2).map_err(map_db_error)?,
+            active: row.get(3).map_err(map_db_error)?,
         }))
     } else {
         Ok(None)

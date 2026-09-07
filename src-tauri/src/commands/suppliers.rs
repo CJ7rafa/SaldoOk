@@ -56,6 +56,8 @@ pub fn create_supplier(state: State<'_, AppState>, name: String, color: String) 
     Ok(db.last_insert_rowid())
 }
 
+// --- UPDATE --- //
+
 #[tauri::command]
 pub fn update_supplier(state: State<'_, AppState>, id: i64, name: String, active: i32, color: String) -> Result<(), String> {
     let db = state.db.lock().unwrap();
