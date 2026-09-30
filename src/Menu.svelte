@@ -3,6 +3,10 @@
   import Header from "./components/Header.svelte";
   import PurchasesTable from "./views/PurchasesTable.svelte";
   import ExpensesTable from "./views/ExpenesTable.svelte";
+  import DailyCashTable from "./views/DailyCashTable.svelte";
+  import IncomeStatement from "./views/IncomeStatement.svelte";
+  import CashFlow from "./views/CashFlow.svelte";
+
   import DatePicker from "./components/right-panel/DatePicker.svelte";
   import AddSupplier from "./components/right-panel/purchase/AddSupplier.svelte";
   import ManageSupplier from "./components/right-panel/purchase/ManageSupplier.svelte";
@@ -11,6 +15,7 @@
   import ManageSpender from "./components/right-panel/expense/ManageSpender.svelte";
   import AddSpenderCategories from "./components/right-panel/expense/AddSpender-Categories.svelte";
   import AddExpense from "./components/right-panel/expense/AddExpense.svelte";
+  import AddDailyCash from "./components/right-panel/daily_cash/AddDailyCash.svelte";
   import ToastContainer from "./components/ToastContainer.svelte";
   import ConfirmationModal from "./components/ConfirmationModal.svelte";
 
@@ -30,7 +35,6 @@
   let currentView = $derived(history[history.length - 1]);
   let canGoBack = $derived(history.length > 1);
 
-  // Computed: título del Header basado en la vista actual
   let headerTitle = $derived(
     currentView === "menu"
       ? "Menú Principal"
@@ -38,7 +42,13 @@
         ? "Gestión de Compras"
         : currentView === "tablagastos"
           ? "Gestión de Gastos"
-          : "SaldoOk",
+          : currentView === "tablaingresos"
+            ? "Flujo de Caja Diario"
+            : currentView === "estadoresultados"
+              ? "Estado de Resultados"
+              : currentView === "flujoefectivo"
+                ? "Flujo de Efectivo"
+                : "SaldoOk",
   );
 
   function navigateTo(view: string) {
@@ -59,7 +69,7 @@
   <section
     class="h-full flex flex-col transition-all duration-300 bg-base-100 {appState.isPanelOpen
       ? 'w-[75%]'
-      : 'w-full'}"
+      : 'w-[calc(100%-2.75rem)]'}"
   >
     <!-- HEADER GLOBAL INTELIGENTE -->
     <Header
@@ -115,6 +125,27 @@
             >
               <span class="font-bold text-primary">Tabla de Gastos</span>
             </button>
+
+            <button
+              onclick={() => navigateTo("tablaingresos")}
+              class="h-32 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-box flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <span class="font-bold text-primary">Tabla de Ingresos</span>
+            </button>
+
+            <button
+              onclick={() => navigateTo("estadoresultados")}
+              class="h-32 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-box flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <span class="font-bold text-primary">Estado de Resultados</span>
+            </button>
+
+            <button
+              onclick={() => navigateTo("flujoefectivo")}
+              class="h-32 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-box flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <span class="font-bold text-primary">Flujo de Efectivo</span>
+            </button>
           </div>
         </div>
       {:else if currentView === "tablacompras"}
@@ -161,6 +192,41 @@
             appState.isPanelOpen = true;
             appState.rightPanelView = "manageCategories";
           }}
+        />
+      {:else if currentView === "tablaingresos"}
+        <DailyCashTable
+          selectedDate={appState.selectedDate}
+          allDailyCash={appState.allDailyCash}
+          allPurchases={appState.allPurchases}
+          allExpenses={appState.allExpenses}
+          onCellClick={(dateStr, existingRegister) => {
+            appState.selectedDailyCashCell = {
+              dateStr,
+              existingRegister,
+            };
+            appState.isPanelOpen = true;
+            appState.rightPanelView = "addDailyCash";
+          }}
+        />
+      {:else if currentView === "estadoresultados"}
+        <IncomeStatement
+          selectedDate={appState.selectedDate}
+          allDailyCash={appState.allDailyCash}
+          allPurchases={appState.allPurchases}
+          allExpenses={appState.allExpenses}
+          allSuppliers={appState.allSuppliersMaster}
+          allSpenders={appState.allSpenders}
+          allCategoriesMaster={appState.allCategoriesMaster}
+        />
+      {:else if currentView === "flujoefectivo"}
+        <CashFlow
+          selectedDate={appState.selectedDate}
+          allDailyCash={appState.allDailyCash}
+          allPurchases={appState.allPurchases}
+          allExpenses={appState.allExpenses}
+          allSuppliers={appState.allSuppliersMaster}
+          allSpenders={appState.allSpenders}
+          allCategoriesMaster={appState.allCategoriesMaster}
         />
       {/if}
     </div>
@@ -253,6 +319,16 @@
             onClose={() => (appState.rightPanelView = "calendar")}
             onSuccess={() => appState.loadData()}
           />
+        {:else if appState.rightPanelView === ("addDailyCash" as any) && appState.selectedDailyCashCell}
+          <AddDailyCash
+            dateStr={appState.selectedDailyCashCell.dateStr}
+            existingRegister={appState.selectedDailyCashCell.existingRegister}
+            onClose={() => {
+              appState.rightPanelView = "calendar";
+              appState.selectedDailyCashCell = null;
+            }}
+            onSuccess={() => appState.loadData()}
+          />
         {/if}
       </div>
     </div>
@@ -261,7 +337,7 @@
   <!-- BURBUJA PARA ABRIR EL PANEL -->
   {#if !appState.isPanelOpen}
     <button
-      class="absolute right-0 top-1/2 -translate-y-1/2 bg-primary text-primary-content hover:brightness-110 transition-all rounded-l-full w-10 h-16 shadow-lg z-50 flex items-center justify-start pl-1 cursor-pointer border-none"
+      class="absolute right-0 top-1/2 -translate-y-1/2 bg-primary text-primary-content hover:brightness-110 transition-all rounded-l-full w-9 h-full shadow-lg z-50 flex items-center justify-start pl-1 cursor-pointer border-none"
       onclick={() => (appState.isPanelOpen = true)}
     >
       <ChevronLeft size={24} />
