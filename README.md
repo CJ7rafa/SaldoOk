@@ -1,47 +1,59 @@
-# Svelte + TS + Vite
+# SaldoOk 📊
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+> ⚠️ **BETA VERSION / VERSIÓN BETA** ⚠️
+>
+> 🇪🇸 **ADVERTENCIA:** Este programa se encuentra actualmente en versión **BETA**. Puede contener errores o comportamientos inesperados. **NO se recomienda su uso para casos serios, negocios o producción real** hasta que se publique una versión estable. Usa bajo tu propio riesgo.
+>
+> 🇺🇸 **WARNING:** This program is currently in **BETA** version. It may contain bugs or unexpected behaviors. It is **NOT recommended for serious use, business, or production environments** until a stable version is released. Use at your own risk.
 
-## Recommended IDE Setup
+---
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+🇪🇸 **Contexto del Proyecto:** Este software fue diseñado de forma altamente personalizada para ajustarse a las circunstancias y métodos de trabajo específicos del padre de su creador. Por lo tanto, **no se recomienda utilizarlo tal cual ("as-is")**, a menos que te encuentres en las mismas circunstancias exactas. Se recomienda a otros desarrolladores que tomen este código base y lo modifiquen libremente para adaptarlo a sus propios casos de uso puntuales.
 
-## Need an official Svelte framework?
+🇺🇸 **Project Context:** This software was highly personalized and designed to fit the specific work circumstances and methods of the creator's father. Therefore, **it is not recommended to use it "as-is"**, unless you find yourself in the exact same circumstances. It is recommended that other developers fork this codebase and modify it freely to adapt it to their own specific use cases.
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+## 🛠️ Stack Tecnológico / Tech Stack
+- **Frontend:** Svelte (Svelte 5), TypeScript, Tailwind CSS, HTML/JS
+- **Desktop Core:** Tauri, Rust
+- **Database:** SQLite
+- **Build Tool:** Vite
 
-## Technical considerations
 
-**Why use this over SvelteKit?**
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
+<details open>
+<summary>🇪🇸 <strong>Español (Spanish)</strong></summary>
 
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
+<br>
 
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
+## Bienvenido a SaldoOk
+SaldoOk es una aplicación de escritorio para llevar el control de finanzas personales y comerciales. Cuenta con módulos integrados para gestionar Compras, Gastos, Flujo de Caja y un Estado de Resultados automatizado.
 
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
+### Características
+- **Tabla de Compras:** Gestiona proveedores y montos totales de cada día.
+- **Tabla de Gastos:** Controla los egresos desglosados por persona y categorías.
+- **Flujo de Caja Diario:** Sistema automatizado para calcular ventas netas, ganancias y manejo de efectivo diario.
+- **Estado de Resultados y Flujo de Efectivo:** Paneles tipo "dashboard" que calculan automáticamente todos los saldos y resumen toda la salud financiera del mes seleccionado.
 
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
+### Licencia
+Consulta el archivo [LICENSE.md](./LICENSE.md) para conocer las reglas obligatorias de uso, distribución y atribución de este proyecto.
 
-**Why include `.vscode/extensions.json`?**
+</details>
 
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
+<details>
+<summary>🇺🇸 <strong>English (Inglés)</strong></summary>
 
-**Why enable `allowJs` in the TS template?**
+<br>
 
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
+## Welcome to SaldoOk
+SaldoOk is a desktop application for tracking personal and business finances. It features built-in modules for managing Purchases, Expenses, Daily Cash Flow, and an automated Income Statement.
 
-**Why is HMR not preserving my local component state?**
+### Features
+- **Purchases Table:** Manage suppliers and daily total amounts.
+- **Expenses Table:** Track outgoings broken down by spender and categories.
+- **Daily Cash Flow:** Automated system to calculate net sales, profits, and daily cash handling.
+- **Income Statement & Cash Flow:** Dashboard-style panels that automatically calculate all balances and summarize the entire financial health of the selected month.
 
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
+### License
+See the [LICENSE.md](./LICENSE.md) file for the mandatory rules regarding the use, distribution, and attribution of this project.
 
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
-```
+</details>
