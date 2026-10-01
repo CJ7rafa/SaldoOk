@@ -35,7 +35,7 @@
 
   async function loadCategories() {
     try {
-      allCategories = await invoke<ExpenseCategory[]>("get_all_expense_categories");
+      allCategories = await invoke<ExpenseCategory[]>("get_expense_categories");
       allCategories.sort((a, b) => a.name.localeCompare(b.name));
 
       if (appState.selectedCategoryToEdit) {
@@ -87,8 +87,8 @@
           id: 0,
           name: nameToAdd.trim(),
           color: colorToAdd,
-          active: 1
-        }
+          active: 1,
+        },
       });
       notifications.show(
         "¡Éxito!",
@@ -122,13 +122,13 @@
 
     isEditing = true;
     try {
-      await invoke("update_expenses_categories", {
+      await invoke("update_expense_category", {
         category: {
           id: selectedCategoryId,
           name: nameToEdit.trim(),
           active: 1,
           color: colorToEdit,
-        }
+        },
       });
       notifications.show(
         "¡Éxito!",
@@ -169,7 +169,7 @@
       async () => {
         isDeleting = true;
         try {
-          await invoke("delete_expenses_categories", { id: selectedCategoryId });
+          await invoke("delete_expense_category", { id: selectedCategoryId });
           notifications.show(
             "Eliminado",
             "La categoría ha sido eliminada correctamente.",
@@ -193,9 +193,7 @@
 
 <div class="flex flex-col h-full overflow-y-auto pr-2">
   <div class="flex items-center justify-between mb-4">
-    <h3 class="font-bold text-sm uppercase opacity-70">
-      Gestionar Categorías
-    </h3>
+    <h3 class="font-bold text-sm uppercase opacity-70">Gestionar Categorías</h3>
   </div>
   <!-- SECCIÓN: AGREGAR CATEGORÍA -->
   <div class="bg-base-200 p-4 rounded-box mb-6 border border-base-300">
