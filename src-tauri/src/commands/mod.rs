@@ -1,50 +1,53 @@
-pub mod suppliers;
 pub mod purchases;
-pub mod purchase_payments;
-pub mod spenders;
-pub mod expenses_categories;
 pub mod expenses;
+pub mod daily_cash;
 
-// Creas una función que agrupa todo
 pub fn get_handlers() -> impl Fn(tauri::ipc::Invoke) -> bool {
     tauri::generate_handler![
         // Suppliers
-        suppliers::get_suppliers,
-        suppliers::create_supplier,
-        suppliers::update_supplier,
-        suppliers::delete_supplier,
+        purchases::suppliers::get_suppliers,
+        purchases::suppliers::create_supplier,
+        purchases::suppliers::update_supplier,
+        purchases::suppliers::delete_supplier,
         
         // Purchases
-        purchases::get_purchases,
-        purchases::create_purchase,
-        purchases::update_purchase,
-        purchases::delete_purchase,
+        purchases::purchases::get_purchases,
+        purchases::purchases::create_purchase,
+        purchases::purchases::update_purchase,
+        purchases::purchases::delete_purchase,
         
         // Purchase Payments
-        purchase_payments::get_purchase_payments,
-        purchase_payments::create_purchase_payment,
-        purchase_payments::update_purchase_payment,
-        purchase_payments::delete_purchase_payment,
+        purchases::purchase_payments::get_purchase_payments,
+        purchases::purchase_payments::create_purchase_payment,
+        purchases::purchase_payments::update_purchase_payment,
+        purchases::purchase_payments::delete_purchase_payment,
 
         // Spenders
-        spenders::get_spenders,
-        spenders::get_spender_by_id,
-        spenders::create_spender,
-        spenders::update_spender,
-        spenders::delete_spender,
+        expenses::spenders::get_spenders,
+        expenses::spenders::get_spender_by_id,
+        expenses::spenders::create_spender,
+        expenses::spenders::update_spender,
+        expenses::spenders::delete_spender,
 
         // Expenses Categories
-        expenses_categories::get_all_expense_categories,
-        expenses_categories::get_expense_category_by_id,
-        expenses_categories::create_expense_category,
-        expenses_categories::update_expenses_categories,
-        expenses_categories::delete_expenses_categories,
+        expenses::expenses_categories::get_expense_categories,
+        expenses::expenses_categories::get_expense_category_by_id,
+        expenses::expenses_categories::create_expense_category,
+        expenses::expenses_categories::update_expense_category,
+        expenses::expenses_categories::delete_expense_category,
 
         // Expenses
-        expenses::get_expenses,
-        expenses::get_expense_by_id,
-        expenses::create_expense,
-        expenses::update_expense,
-        expenses::delete_expense
+        expenses::expenses::get_expenses,
+        expenses::expenses::get_expense_by_id,
+        expenses::expenses::create_expense,
+        expenses::expenses::update_expense,
+        expenses::expenses::delete_expense,
+
+        // Daily Cash
+        daily_cash::daily_cash_registers::create_daily_cash_register,
+        daily_cash::daily_cash_registers::get_daily_cash_registers,
+        daily_cash::daily_cash_registers::get_daily_cash_register_by_date,
+        daily_cash::daily_cash_registers::update_daily_cash_register,
+        daily_cash::daily_cash_registers::delete_daily_cash_register
     ]
 }

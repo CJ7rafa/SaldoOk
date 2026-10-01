@@ -25,7 +25,7 @@ pub fn create_expense_category(state: State<'_, AppState>, category: ExpenseCate
 // --- READ ALL --- //
 
 #[tauri::command]
-pub fn get_all_expense_categories(state: State<'_, AppState>) -> Result<Vec<ExpenseCategory>, String> {
+pub fn get_expense_categories(state: State<'_, AppState>) -> Result<Vec<ExpenseCategory>, String> {
     let db = state.db.lock().unwrap();
     let mut stmt = db.prepare("SELECT id, name, color, active FROM expense_categories ORDER BY name ASC").map_err(map_db_error)?;
     let category_iter = stmt.query_map([], |row| {
@@ -67,7 +67,7 @@ pub fn get_expense_category_by_id(state: State<'_, AppState>, id: i64) -> Result
 // --- UPDATE --- //
 
 #[tauri::command]
-pub fn update_expenses_categories(state: State<'_, AppState>, category: ExpenseCategory) -> Result<(), String> {
+pub fn update_expense_category(state: State<'_, AppState>, category: ExpenseCategory) -> Result<(), String> {
     let db = state.db.lock().unwrap();
 
     db.execute(
@@ -88,7 +88,7 @@ pub fn update_expenses_categories(state: State<'_, AppState>, category: ExpenseC
 // --- DELETE --- //
 
 #[tauri::command]
-pub fn delete_expenses_categories(state: State<'_, AppState>, id: i64) -> Result<(), String> {
+pub fn delete_expense_category(state: State<'_, AppState>, id: i64) -> Result<(), String> {
     let db = state.db.lock().unwrap();
 
     db.execute(
