@@ -1,15 +1,7 @@
-pub mod suppliers;
 pub mod purchases;
-pub mod purchase_payments;
-
-pub mod spenders;
-pub mod expenses_categories;
 pub mod expenses;
+pub mod daily_cash;
 
-pub use suppliers::Supplier;
-pub use purchases::Purchase;
-pub use purchase_payments::PurchasePayment;
-
-pub use spenders::Spender;
-pub use expenses_categories::ExpenseCategory;
-pub use expenses::Expense;
+pub use purchases::*;
+pub use expenses::*;
+pub use daily_cash::*;
