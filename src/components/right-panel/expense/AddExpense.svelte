@@ -83,6 +83,14 @@
   }
 </script>
 
+<svelte:window onkeydown={(e) => {
+  if (e.key === 'Enter' && !isLoading) {
+    if (document.activeElement?.tagName === 'TEXTAREA') return;
+    e.preventDefault();
+    handleAceptar();
+  }
+}} />
+
 <div class="flex flex-col h-full">
   <h3 class="font-bold mb-6 text-sm uppercase opacity-70">
     {existingExpense ? "Editar Gasto" : "Agregar Gasto"}
