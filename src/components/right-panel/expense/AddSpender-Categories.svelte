@@ -7,6 +7,22 @@
   let selectedSpenderId = $state<number | "">("");
   let selectedCategoryId = $state<number | "">("");
 
+  // Categorías disponibles (que no están ya asignadas a la persona seleccionada en el mes actual)
+  let availableCategories = $derived(() => {
+    if (selectedSpenderId === "") return [];
+
+    const group = appState.activeSpenderGroups.find(
+      (g) => g.spender.id === selectedSpenderId
+    );
+
+    if (!group) return appState.allCategoriesMaster;
+
+    const activeCategoryIds = new Set(group.categories.map((c) => c.id));
+    return appState.allCategoriesMaster.filter(
+      (c) => !activeCategoryIds.has(c.id)
+    );
+  });
+
   function handleAdd() {
     if (selectedSpenderId === "" || selectedCategoryId === "") {
       notifications.show("Error", "Debes seleccionar una persona y una categoría", "warning");
@@ -19,6 +35,7 @@
     if (spender && category) {
       appState.addManualSpenderCategory(spender, category);
       notifications.show("Éxito", "Columna añadida a la tabla", "success");
+      selectedCategoryId = ""; // Reiniciar la categoría para agregar otra rápidamente si quiere
     }
   }
 </script>
@@ -41,6 +58,7 @@
         id="spenderSelect"
         class="select select-bordered select-sm w-full"
         bind:value={selectedSpenderId}
+        onchange={() => { selectedCategoryId = ""; }}
       >
         <option value="">-- Elige una persona --</option>
         {#each appState.allSpenders as s (s.id)}
@@ -49,30 +67,41 @@
       </select>
     </div>
 
-    <div class="form-control w-full mb-4">
-      <label class="label pt-0 pb-1" for="categorySelect">
-        <span class="label-text text-xs font-medium opacity-70">Categoría</span>
-      </label>
-      <select
-        id="categorySelect"
-        class="select select-bordered select-sm w-full"
-        bind:value={selectedCategoryId}
-      >
-        <option value="">-- Elige una categoría --</option>
-        {#each appState.allCategoriesMaster as c (c.id)}
-          <option value={c.id}>{c.name}</option>
-        {/each}
-      </select>
-    </div>
+    <!-- Mostrar opciones de categoría SOLO si ya seleccionó una Persona -->
+    {#if selectedSpenderId !== ""}
+      <div class="form-control w-full mb-4">
+        <label class="label pt-0 pb-1" for="categorySelect">
+          <span class="label-text text-xs font-medium opacity-70">Categoría</span>
+        </label>
+        
+        {#if availableCategories().length === 0}
+          <div class="text-xs text-error font-medium mt-1">
+            Esta persona ya tiene todas las categorías disponibles asignadas en la tabla.
+          </div>
+        {:else}
+          <select
+            id="categorySelect"
+            class="select select-bordered select-sm w-full"
+            bind:value={selectedCategoryId}
+          >
+            <option value="">-- Elige una categoría --</option>
+            {#each availableCategories() as c (c.id)}
+              <option value={c.id}>{c.name}</option>
+            {/each}
+          </select>
+        {/if}
+      </div>
 
-    <div class="flex gap-2">
-      <button
-        class="btn btn-primary btn-sm flex-1"
-        onclick={handleAdd}
-      >
-        Agregar a la tabla
-      </button>
-    </div>
+      <div class="flex gap-2">
+        <button
+          class="btn btn-primary btn-sm flex-1"
+          onclick={handleAdd}
+          disabled={selectedCategoryId === "" || availableCategories().length === 0}
+        >
+          Agregar a la tabla
+        </button>
+      </div>
+    {/if}
   </div>
 
   <button
