@@ -45,7 +45,7 @@
   }
 </script>
 
-<div class="flex flex-col h-full">
+<div class="flex flex-col h-full overflow-y-auto pr-2">
   <h3 class="font-bold mb-4 text-sm uppercase opacity-70">
     Seleccionar Proveedor
   </h3>
