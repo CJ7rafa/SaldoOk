@@ -5,7 +5,7 @@ class AppState {
   // 1. Estados Visuales Globales
   isPanelOpen = $state(false);
   selectedDate = $state(new Date());
-  rightPanelView = $state<"calendar" | "manageSupplier" | "addSupplier" | "addPurchase" | "manageCategories" | "manageSpender" | "addSpenderCategory" | "addExpense">("calendar");
+  rightPanelView = $state<"calendar" | "manageSupplier" | "addSupplier" | "addPurchase" | "manageCategories" | "manageSpender" | "addSpenderCategory" | "addExpense" | "addDailyCash">("calendar");
 
   // 2. Datos de la Base de Datos
   allSuppliersMaster = $state<Supplier[]>([]);
@@ -16,6 +16,8 @@ class AppState {
   manuallyAddedSpenderCategories = $state<{ prefix: string; spender: Spender; category: ExpenseCategory }[]>([]);
   allExpenses = $state<Expense[]>([]);
   allSpenders = $state<Spender[]>([]);
+  
+  allDailyCash = $state<import("../types").DailyCashRegister[]>([]);
 
   // 3. Estados de Edición/Selección
   selectedPurchaseCell = $state<{ dateStr: string; supplier: Supplier; existingPurchase?: Purchase } | null>(null);
@@ -24,6 +26,8 @@ class AppState {
   selectedExpenseCell = $state<{ dateStr: string; spender: Spender; category: ExpenseCategory; existingExpense?: Expense } | null>(null);
   selectedCategoryToEdit = $state<ExpenseCategory | null>(null);
   selectedSpenderToEdit = $state<Spender | null>(null);
+
+  selectedDailyCashCell = $state<{ dateStr: string; existingRegister?: import("../types").DailyCashRegister } | null>(null);
 
   // 4. Valores Calculados (Derivados automáticamente)
   // Al usar "get", Svelte 5 automáticamente lo hace reactivo cuando cambian las variables internas
@@ -102,6 +106,8 @@ class AppState {
       this.allCategoriesMaster = await invoke<ExpenseCategory[]>("get_expense_categories");
       this.allExpenses = await invoke<Expense[]>("get_expenses");
       this.allSpenders = await invoke<Spender[]>("get_spenders");
+      
+      this.allDailyCash = await invoke<import("../types").DailyCashRegister[]>("get_daily_cash_registers");
     } catch (e) {
       console.error("Error cargando base de datos:", e);
     }

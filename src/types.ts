@@ -39,3 +39,16 @@ export interface Expense {
   expense_date: string;
   notes?: string;
 }
+
+export interface DailyCashRegister {
+  id?: number;
+  entry_date: string;
+  market_sales: number;
+  market_vault_saved: number;
+  house_sales: number;
+  house_shop_savings: number;
+  chain_income: number;
+  vault_loan: number;
+  self_consumption: number;
+  notes?: string;
+}
